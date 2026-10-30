@@ -1,0 +1,11 @@
+{
+  "name": "testsphere-backend",
+  "private": true,
+  "description": "TestSphere runner dependencies for Playwright test execution",
+  "scripts": {
+    "playwright": "playwright"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.62.0"
+  }
+}
