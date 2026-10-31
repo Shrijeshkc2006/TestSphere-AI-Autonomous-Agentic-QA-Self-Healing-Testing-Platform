@@ -166,7 +166,9 @@ export function connectRunSocket(runId, onMessage, onClose) {
 
   ws.onclose = () => onClose?.();
   ws.onerror = () => {
-    try { ws.close(); } catch {}
+    try { ws.close(); } catch {
+      /* ignore close errors on teardown */
+    }
   };
 
   return ws;

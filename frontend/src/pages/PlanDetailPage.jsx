@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   CheckCircle2, Play, Pencil, Save, X, AlertTriangle, ChevronDown, ChevronUp,
-  Code2, Clock, Hash, Target, Type, FileText, Zap
+  Code2, Copy, Check
 } from 'lucide-react';
 import { plansApi, runsApi } from '../api/client.js';
 import { Badge, Spinner, Alert, PageHeader, SkeletonCard } from '../components/ui.jsx';
@@ -19,41 +19,62 @@ const ACTION_ICONS = {
   screenshot: '📸',
 };
 
-const STATUS_COLORS = {
-  draft: 'var(--text-muted)',
-  pending_review: 'var(--amber-600)',
-  approved: 'var(--green-600)',
-  generating: 'var(--indigo-600)',
-};
-
 function StepCard({ step, editMode, onChange }) {
   const [expanded, setExpanded] = useState(false);
 
   if (editMode) {
     return (
-      <div style={{
-        border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-        padding: '12px 14px', marginBottom: 8, background: 'var(--bg-subtle)',
-      }}>
+      <div
+        style={{
+          border: '1px solid var(--border-primary)',
+          borderRadius: 'var(--radius)',
+          padding: '12px 14px',
+          marginBottom: 8,
+          background: 'var(--bg-elevated)',
+        }}
+      >
         <div className="flex items-center gap-2 mb-3">
-          <span style={{
-            minWidth: 24, height: 24, borderRadius: '50%', background: 'var(--indigo-50)',
-            color: 'var(--accent)', fontWeight: 700, fontSize: '0.7rem',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>{step.order}</span>
-          <input className="input flex-1" style={{ height: 32 }} value={step.title}
-            onChange={e => onChange({ ...step, title: e.target.value })} />
+          <span
+            style={{
+              minWidth: 22,
+              height: 22,
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--accent-bg)',
+              color: 'var(--accent)',
+              border: '1px solid var(--accent-border)',
+              fontWeight: 600,
+              fontSize: '0.6875rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'var(--font-mono)',
+            }}
+          >
+            {step.order}
+          </span>
+          <input
+            className="input flex-1"
+            style={{ height: 30 }}
+            value={step.title}
+            onChange={e => onChange({ ...step, title: e.target.value })}
+          />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div className="form-group">
             <label className="form-label">Selector</label>
-            <input className="input font-mono text-xs" value={step.selector || ''}
-              onChange={e => onChange({ ...step, selector: e.target.value })} />
+            <input
+              className="input font-mono text-xs"
+              value={step.selector || ''}
+              onChange={e => onChange({ ...step, selector: e.target.value })}
+            />
           </div>
           <div className="form-group">
-            <label className="form-label">Value</label>
-            <input className="input text-xs" value={step.value || ''}
-              onChange={e => onChange({ ...step, value: e.target.value })} />
+            <label className="form-label">Expected Value / Input</label>
+            <input
+              className="input font-mono text-xs"
+              value={step.value || ''}
+              onChange={e => onChange({ ...step, value: e.target.value })}
+            />
           </div>
         </div>
       </div>
@@ -61,76 +82,124 @@ function StepCard({ step, editMode, onChange }) {
   }
 
   return (
-    <div style={{
-      border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-      marginBottom: 8, overflow: 'hidden', background: 'var(--bg)',
-    }}>
+    <div
+      style={{
+        border: '1px solid var(--border-primary)',
+        borderRadius: 'var(--radius)',
+        marginBottom: 6,
+        overflow: 'hidden',
+        background: 'var(--bg-card)',
+      }}
+    >
       <button
         onClick={() => setExpanded(e => !e)}
         style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-          padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '10px 14px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          textAlign: 'left',
         }}
       >
-        <span style={{
-          minWidth: 24, height: 24, borderRadius: '50%', background: 'var(--indigo-50)',
-          color: 'var(--accent)', fontWeight: 700, fontSize: '0.7rem',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>{step.order}</span>
-        <span style={{
-          width: 28, height: 20, background: 'var(--bg-muted)', borderRadius: 4,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '0.7rem', color: 'var(--text-muted)', flexShrink: 0,
-        }}>
-          {ACTION_ICONS[step.action_type] || step.action_type[0].toUpperCase()}
+        <span
+          style={{
+            minWidth: 22,
+            height: 22,
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-primary)',
+            color: 'var(--text-muted)',
+            fontWeight: 600,
+            fontSize: '0.6875rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            fontFamily: 'var(--font-mono)',
+          }}
+        >
+          {step.order}
         </span>
-        <span style={{ fontWeight: 500, fontSize: '0.875rem', flex: 1 }}>{step.title}</span>
-        <code style={{ fontSize: '0.7rem', color: 'var(--text-muted)', background: 'var(--bg-muted)', padding: '2px 6px', borderRadius: 4 }}>
+        <span
+          style={{
+            width: 24,
+            height: 20,
+            background: 'var(--bg-elevated)',
+            borderRadius: 3,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '0.6875rem',
+            color: 'var(--text-secondary)',
+            flexShrink: 0,
+            fontFamily: 'var(--font-mono)',
+          }}
+        >
+          {ACTION_ICONS[step.action_type] || step.action_type[0]?.toUpperCase()}
+        </span>
+        <span style={{ fontWeight: 500, fontSize: '0.8125rem', flex: 1, color: 'var(--text-primary)' }}>
+          {step.title}
+        </span>
+        <code style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
           {step.action_type}
         </code>
-        {expanded ? <ChevronUp size={14} color="var(--text-muted)" /> : <ChevronDown size={14} color="var(--text-muted)" />}
+        {expanded ? (
+          <ChevronUp size={13} style={{ color: 'var(--text-muted)' }} />
+        ) : (
+          <ChevronDown size={13} style={{ color: 'var(--text-muted)' }} />
+        )}
       </button>
 
       {expanded && (
-        <div style={{ padding: '0 14px 14px', borderTop: '1px solid var(--border)', background: 'var(--bg-subtle)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, paddingTop: 12 }}>
+        <div
+          style={{
+            padding: '12px 14px',
+            borderTop: '1px solid var(--border-subtle)',
+            background: 'var(--bg-elevated)',
+          }}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {step.description && (
               <div style={{ gridColumn: '1 / -1' }}>
                 <div className="text-xs text-muted mb-1">Description</div>
-                <p style={{ fontSize: '0.8125rem' }}>{step.description}</p>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-primary)' }}>{step.description}</p>
               </div>
             )}
             {step.selector && (
               <div>
-                <div className="text-xs text-muted mb-1">Selector</div>
-                <code style={{ fontSize: '0.75rem', background: 'var(--bg-muted)', padding: '3px 6px', borderRadius: 4, display: 'block', wordBreak: 'break-all' }}>
+                <div className="text-xs text-muted mb-1">DOM Selector</div>
+                <code style={{ fontSize: '0.75rem', display: 'block', wordBreak: 'break-all' }}>
                   {step.selector}
                 </code>
               </div>
             )}
             {step.value && (
               <div>
-                <div className="text-xs text-muted mb-1">Value</div>
-                <code style={{ fontSize: '0.75rem', background: 'var(--bg-muted)', padding: '3px 6px', borderRadius: 4, display: 'block' }}>
+                <div className="text-xs text-muted mb-1">Target Value</div>
+                <code style={{ fontSize: '0.75rem', display: 'block' }}>
                   {step.is_sensitive ? '••••••••' : step.value}
                 </code>
               </div>
             )}
             {step.assertion && (
               <div>
-                <div className="text-xs text-muted mb-1">Assertion</div>
-                <code style={{ fontSize: '0.75rem', background: 'var(--bg-muted)', padding: '3px 6px', borderRadius: 4, display: 'block' }}>
+                <div className="text-xs text-muted mb-1">Assertion Rule</div>
+                <code style={{ fontSize: '0.75rem', display: 'block' }}>
                   {step.assertion}
                 </code>
               </div>
             )}
             <div>
               <div className="text-xs text-muted mb-1">Timeout</div>
-              <span style={{ fontSize: '0.8125rem' }}>{step.timeout_ms}ms</span>
+              <span className="font-mono text-xs text-secondary">{step.timeout_ms || 30000}ms</span>
             </div>
             <div>
               <div className="text-xs text-muted mb-1">Max Retries</div>
-              <span style={{ fontSize: '0.8125rem' }}>{step.retry_count}</span>
+              <span className="font-mono text-xs text-secondary">{step.retry_count ?? 2}</span>
             </div>
           </div>
         </div>
@@ -151,13 +220,14 @@ export default function PlanDetailPage() {
   const [approving, setApproving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState(null);
+  const [copiedCode, setCopiedCode] = useState(false);
   const [running, setRunning] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const p = await plansApi.get(planId);
       setPlan(p);
-      setSteps(p.steps.map(s => ({ ...s })));
+      setSteps((p.steps || []).map(s => ({ ...s })));
     } catch (e) {
       setError(e.message);
     } finally {
@@ -185,10 +255,15 @@ export default function PlanDetailPage() {
       for (const step of steps) {
         if (step.id) {
           await plansApi.updateStep(planId, step.id, {
-            order: step.order, title: step.title,
-            action_type: step.action_type, selector: step.selector,
-            value: step.value, assertion: step.assertion,
-            timeout_ms: step.timeout_ms, retry_count: step.retry_count, is_sensitive: step.is_sensitive,
+            order: step.order,
+            title: step.title,
+            action_type: step.action_type,
+            selector: step.selector,
+            value: step.value,
+            assertion: step.assertion,
+            timeout_ms: step.timeout_ms,
+            retry_count: step.retry_count,
+            is_sensitive: step.is_sensitive,
           });
         }
       }
@@ -213,6 +288,13 @@ export default function PlanDetailPage() {
     }
   };
 
+  const handleCopyCode = () => {
+    if (!generatedCode?.content) return;
+    navigator.clipboard.writeText(generatedCode.content);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
   const handleRun = async () => {
     setRunning(true);
     try {
@@ -224,57 +306,82 @@ export default function PlanDetailPage() {
     }
   };
 
-  if (loading) return (
-    <div className="main-area">
-      <div className="page-content">{[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}</div>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="main-area">
+        <div className="page-content" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      </div>
+    );
+  }
 
-  const canRun = plan?.status === 'approved';
+  const isApproved = plan?.status === 'approved';
 
   return (
     <div className="main-area">
       <PageHeader
-        title={plan?.name || '…'}
+        title={plan?.name || 'Test Plan'}
         subtitle={
           <span className="flex items-center gap-2">
-            <span style={{ fontSize: '0.75rem', color: STATUS_COLORS[plan?.status] || 'var(--text-muted)', fontWeight: 500 }}>
-              ● {plan?.status?.replace('_', ' ')}
-            </span>
+            <Badge status={plan?.status} />
             <span className="text-muted">·</span>
-            <span className="text-xs text-muted">{plan?.steps?.length} steps · v{plan?.version}</span>
+            <span className="text-xs text-muted font-mono">{plan?.steps?.length || 0} steps</span>
+            <span className="text-muted">·</span>
+            <span className="text-xs text-muted font-mono">v{plan?.version}</span>
           </span>
         }
         back={() => navigate(`/projects/${plan?.project_id}`)}
         actions={
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             {!editMode ? (
               <>
-                <button className="btn btn-ghost btn-sm" onClick={() => setEditMode(true)}>
-                  <Pencil size={13} /> Edit Steps
+                <button className="btn btn-secondary btn-sm" onClick={() => setEditMode(true)}>
+                  <Pencil size={12} /> Edit Steps
                 </button>
-                {plan?.status !== 'approved' && (
-                  <button className="btn btn-sm" style={{ background: 'var(--green-500)', color: '#fff', border: 'none' }}
-                    onClick={handleApprove} disabled={approving}>
-                    {approving ? <Spinner size="sm" /> : <><CheckCircle2 size={13} /> Approve</>}
+                {!isApproved && (
+                  <button
+                    className="btn btn-sm btn-success"
+                    onClick={handleApprove}
+                    disabled={approving}
+                  >
+                    {approving ? <Spinner size="sm" /> : <><CheckCircle2 size={13} /> Approve Plan</>}
                   </button>
                 )}
-                <button className="btn btn-ghost btn-sm" onClick={handleGenerateCode} disabled={generating}>
-                  {generating ? <Spinner size="sm" /> : <><Code2 size={13} /> Generate Code</>}
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleGenerateCode}
+                  disabled={generating}
+                >
+                  {generating ? <Spinner size="sm" /> : <><Code2 size={12} /> Generate Code</>}
                 </button>
-                {canRun && (
-                  <button className="btn btn-primary btn-sm" onClick={handleRun} disabled={running}>
-                    {running ? <Spinner size="sm" /> : <><Play size={13} /> Run Tests</>}
+                {isApproved && (
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={handleRun}
+                    disabled={running}
+                  >
+                    {running ? <Spinner size="sm" /> : <><Play size={12} /> Run Tests</>}
                   </button>
                 )}
               </>
             ) : (
               <>
-                <button className="btn btn-ghost btn-sm" onClick={() => { setEditMode(false); setSteps(plan.steps.map(s => ({ ...s }))); }}>
-                  <X size={13} /> Cancel
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setEditMode(false);
+                    setSteps((plan?.steps || []).map(s => ({ ...s })));
+                  }}
+                >
+                  <X size={12} /> Cancel
                 </button>
-                <button className="btn btn-primary btn-sm" onClick={handleSaveSteps} disabled={saving}>
-                  {saving ? <Spinner size="sm" /> : <><Save size={13} /> Save</>}
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handleSaveSteps}
+                  disabled={saving}
+                >
+                  {saving ? <Spinner size="sm" /> : <><Save size={12} /> Save</>}
                 </button>
               </>
             )}
@@ -282,94 +389,125 @@ export default function PlanDetailPage() {
         }
       />
 
-      <div className="page-content">
+      <div className="page-content" style={{ maxWidth: 980 }}>
         {error && <Alert type="error" style={{ marginBottom: 16 }}>{error}</Alert>}
 
-        {plan?.ai_assumptions?.length > 0 && (
-          <div style={{ background: 'var(--blue-50)', border: '1px solid #bfdbfe', borderRadius: 'var(--radius)', padding: '10px 14px', marginBottom: 16 }}>
-            <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: '#1d4ed8', marginBottom: 6 }}>AI Assumptions</div>
-            <ul style={{ paddingLeft: 16 }}>
-              {plan.ai_assumptions.map((a, i) => (
-                <li key={i} className="text-xs" style={{ color: '#1d4ed8', marginBottom: 2 }}>{a}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {plan?.ai_warnings?.length > 0 && (
-          <div style={{ background: 'var(--amber-50)', border: '1px solid var(--amber-100)', borderRadius: 'var(--radius)', padding: '10px 14px', marginBottom: 16 }}>
-            <div className="flex items-center gap-2 mb-1">
-              <AlertTriangle size={14} color="var(--amber-600)" />
-              <span style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--amber-700)' }}>Warnings</span>
+        {/* Readiness Notification Banner */}
+        {!isApproved && (
+          <div
+            style={{
+              background: 'var(--warning-bg)',
+              border: '1px solid var(--warning-border)',
+              borderRadius: 'var(--radius)',
+              padding: '12px 14px',
+              marginBottom: 16,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle size={15} style={{ color: 'var(--warning)', flexShrink: 0 }} />
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--warning)' }}>
+                  Plan Pending Approval
+                </div>
+                <div className="text-xs text-muted">
+                  Review the test steps below. Click "Approve Plan" to unlock automated execution.
+                </div>
+              </div>
             </div>
-            <ul style={{ paddingLeft: 16 }}>
-              {plan.ai_warnings.map((w, i) => (
-                <li key={i} className="text-xs" style={{ color: 'var(--amber-700)', marginBottom: 2 }}>{w}</li>
-              ))}
-            </ul>
+            <button
+              className="btn btn-sm btn-success"
+              onClick={handleApprove}
+              disabled={approving}
+              style={{ flexShrink: 0 }}
+            >
+              {approving ? <Spinner size="sm" /> : <><CheckCircle2 size={12} /> Approve Now</>}
+            </button>
           </div>
         )}
 
+        {/* Requirements Card */}
         {plan?.requirements && (
-          <div className="card mb-4" style={{ padding: '12px 16px' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>REQUIREMENTS</div>
-            <p style={{ fontSize: '0.875rem', whiteSpace: 'pre-line' }}>{plan.requirements}</p>
+          <div className="card mb-4" style={{ padding: '14px 18px' }}>
+            <div className="text-xs text-muted mb-1 font-mono" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              REQUIREMENTS SPECIFICATION
+            </div>
+            <p style={{ fontSize: '0.8125rem', whiteSpace: 'pre-line', color: 'var(--text-primary)' }}>
+              {plan.requirements}
+            </p>
           </div>
         )}
 
-        {/* Steps */}
+        {/* Steps Header */}
         <div className="flex items-center justify-between mb-3">
-          <h2 style={{ fontSize: '0.9375rem', fontWeight: 600 }}>
-            Steps ({steps.length})
+          <h2 style={{ fontSize: '0.875rem', fontWeight: 600 }}>
+            Sequential Verification Steps ({steps.length})
           </h2>
-          {!canRun && plan?.status !== 'approved' && (
-            <div style={{ fontSize: '0.75rem', color: 'var(--amber-600)', background: 'var(--amber-50)', padding: '4px 10px', borderRadius: 20 }}>
-              Approve this plan to enable test runs
-            </div>
-          )}
+          <span className="text-xs text-muted">
+            {editMode ? 'Editing mode active' : 'Click any step to inspect details'}
+          </span>
         </div>
 
-        {steps.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
-            No steps in this plan yet.
+        {/* Steps List */}
+        {steps.length === 0 ? (
+          <div
+            style={{
+              padding: '32px',
+              textAlign: 'center',
+              border: '1px dashed var(--border-primary)',
+              borderRadius: 'var(--radius)',
+              color: 'var(--text-muted)',
+              fontSize: '0.8125rem',
+            }}
+          >
+            No steps defined in this plan.
           </div>
+        ) : (
+          steps.map((step, idx) => (
+            <StepCard
+              key={step.id || idx}
+              step={step}
+              editMode={editMode}
+              onChange={updated => setSteps(prev => prev.map((s, i) => i === idx ? updated : s))}
+            />
+          ))
         )}
 
-        {steps.map((step, idx) => (
-          <StepCard
-            key={step.id || idx}
-            step={step}
-            editMode={editMode}
-            onChange={updated => setSteps(prev => prev.map((s, i) => i === idx ? updated : s))}
-          />
-        ))}
-
-        {/* Generated code */}
+        {/* Generated Playwright Code Preview */}
         {generatedCode && (
           <div style={{ marginTop: 24 }}>
             <div className="flex items-center justify-between mb-2">
-              <h3 style={{ fontWeight: 600, fontSize: '0.9375rem' }}>
-                <Code2 size={15} style={{ display: 'inline', marginRight: 6 }} />
-                Generated: {generatedCode.filename}
-              </h3>
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => {
-                  const blob = new Blob([generatedCode.content], { type: 'text/javascript' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url; a.download = generatedCode.filename; a.click();
-                  URL.revokeObjectURL(url);
-                }}
-              >
-                Download
-              </button>
+              <div className="flex items-center gap-2">
+                <Code2 size={15} style={{ color: 'var(--accent)' }} />
+                <h3 style={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                  {generatedCode.filename}
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="btn btn-secondary btn-sm" onClick={handleCopyCode}>
+                  {copiedCode ? <Check size={12} /> : <Copy size={12} />}
+                  <span>{copiedCode ? 'Copied' : 'Copy'}</span>
+                </button>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    const blob = new Blob([generatedCode.content], { type: 'text/javascript' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = generatedCode.filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  Download .spec.js
+                </button>
+              </div>
             </div>
-            <pre style={{
-              background: 'var(--gray-900)', color: '#e2e8f0', borderRadius: 'var(--radius-lg)',
-              padding: '16px 20px', fontSize: '0.75rem', overflow: 'auto', maxHeight: 400,
-              fontFamily: 'var(--font-mono)', lineHeight: 1.6,
-            }}>
+            <pre className="code-block" style={{ maxHeight: 380 }}>
               {generatedCode.content}
             </pre>
           </div>

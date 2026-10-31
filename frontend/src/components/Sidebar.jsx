@@ -1,18 +1,19 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, FolderOpen, History, Settings,
-  LogOut, TestTube2, Plus,
+  LogOut, TestTube2, Plus, FileText, X
 } from 'lucide-react';
 import { useAuth } from '../AuthContext.jsx';
 
 const navItems = [
-  { to: '/dashboard',  icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/projects',   icon: FolderOpen,       label: 'Projects'  },
-  { to: '/runs',       icon: History,           label: 'Recent Runs' },
-  { to: '/settings',   icon: Settings,          label: 'Settings'  },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/projects',  icon: FolderOpen,       label: 'Projects'  },
+  { to: '/plans',     icon: FileText,         label: 'Test Plans' },
+  { to: '/runs',      icon: History,          label: 'Recent Runs' },
+  { to: '/settings',  icon: Settings,         label: 'Settings'  },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen = false, onClose = () => {} }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -25,53 +26,98 @@ export default function Sidebar() {
     ? (user.username || user.email || 'U').slice(0, 2).toUpperCase()
     : 'U';
 
+  const handleNavClick = () => {
+    if (window.innerWidth <= 840) {
+      onClose();
+    }
+  };
+
   return (
-    <aside className="sidebar">
-      {/* Logo */}
-      <NavLink to="/dashboard" className="sidebar-logo" style={{ textDecoration: 'none' }}>
-        <div className="sidebar-logo-mark">
-          <TestTube2 size={16} color="#fff" />
-        </div>
-        <span className="sidebar-logo-text">Test<span>Sphere</span></span>
-      </NavLink>
-
-      {/* Quick action */}
-      <div style={{ padding: '0 12px', marginBottom: 4 }}>
-        <button
-          className="btn btn-primary btn-sm w-full"
-          onClick={() => navigate('/projects/new')}
-          style={{ justifyContent: 'center', width: '100%' }}
-        >
-          <Plus size={13} /> New Project
-        </button>
-      </div>
-
-      {/* Nav */}
-      <div className="sidebar-section">
-        <div className="sidebar-section-label">Navigation</div>
-        {navItems.map(({ to, icon: Icon, label }) => (
+    <>
+      <div
+        className={`sidebar-overlay ${isOpen ? 'open' : ''}`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+        {/* Logo Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)' }}>
           <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            to="/dashboard"
+            className="sidebar-logo"
+            style={{ textDecoration: 'none', borderBottom: 'none', padding: '14px 16px', flex: 1 }}
+            onClick={handleNavClick}
           >
-            <Icon size={15} />
-            {label}
+            <div className="sidebar-logo-mark">
+              <TestTube2 size={15} />
+            </div>
+            <div className="sidebar-logo-text">
+              Test<span>Sphere</span>
+            </div>
+            <span className="sidebar-badge">v1.0</span>
           </NavLink>
-        ))}
-      </div>
+          {isOpen && (
+            <button
+              className="btn-icon"
+              onClick={onClose}
+              style={{ marginRight: 10 }}
+              aria-label="Close sidebar"
+            >
+              <X size={15} />
+            </button>
+          )}
+        </div>
 
-      {/* Footer / user */}
-      <div className="sidebar-footer">
-        <button className="user-chip" onClick={handleLogout} title="Sign out" style={{ width: '100%' }}>
-          <div className="avatar">{initials}</div>
-          <div className="user-chip-info">
-            <div className="user-chip-name">{user?.username || 'User'}</div>
-            <div className="user-chip-email">{user?.email || ''}</div>
-          </div>
-          <LogOut size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-        </button>
-      </div>
-    </aside>
+        {/* Quick action button */}
+        <div className="sidebar-quick-action">
+          <button
+            className="btn btn-primary btn-sm w-full"
+            onClick={() => {
+              navigate('/projects/new');
+              handleNavClick();
+            }}
+            style={{ justifyContent: 'center', width: '100%' }}
+          >
+            <Plus size={13} />
+            <span>New Project</span>
+          </button>
+        </div>
+
+        {/* Main Navigation */}
+        <div className="sidebar-section">
+          <div className="sidebar-section-label">Platform</div>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {navItems.map(({ to, icon: Icon, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+                onClick={handleNavClick}
+              >
+                <Icon size={15} />
+                <span>{label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+
+        {/* User profile & footer */}
+        <div className="sidebar-footer">
+          <button
+            className="user-chip"
+            onClick={handleLogout}
+            title="Click to sign out"
+            aria-label="User profile and logout"
+          >
+            <div className="avatar">{initials}</div>
+            <div className="user-chip-info">
+              <div className="user-chip-name">{user?.username || 'Developer'}</div>
+              <div className="user-chip-email">{user?.email || 'authenticated'}</div>
+            </div>
+            <LogOut size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
